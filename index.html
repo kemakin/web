@@ -2,13 +2,15 @@
 <html lang="de">
 <head>
 <meta charset="UTF-8">
-<title>Fang den Punkt!</title>
+<title>Fang den Punkt! (Mobil)</title>
 <style>
   body { 
     display: flex; 
-    justify-content: center; 
+    flex-direction: column;
     align-items: center; 
+    justify-content: center; 
     height: 100vh; 
+    margin: 0; 
     background-color: #222; 
     color: white; 
     font-family: sans-serif;
@@ -16,11 +18,35 @@
   canvas { 
     background-color: #333; 
     border: 2px solid #fff; 
+    touch-action: none;
+  }
+  .controls {
+    margin-top: 10px;
+    display: grid;
+    grid-template-columns: repeat(3, 60px);
+    grid-template-rows: repeat(2, 60px);
+    gap: 10px;
+  }
+  .btn {
+    background-color: #555;
+    color: white;
+    font-size: 20px;
+    border: none;
+    border-radius: 10px;
   }
 </style>
 </head>
 <body>
 <canvas id="gameCanvas" width="500" height="500"></canvas>
+<div class="controls">
+  <button class="btn" id="up">↑</button>
+  <div></div>
+  <button class="btn" id="down">↓</button>
+  <button class="btn" id="left">←</button>
+  <div></div>
+  <button class="btn" id="right">→</button>
+</div>
+
 <script>
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
@@ -30,17 +56,36 @@ let point = { x: Math.random()*480, y: Math.random()*480, size: 15, color: "red"
 let score = 0;
 let speed = 5;
 
-let keys = {};
+// Bewegung über Buttons
+let move = { up: false, down: false, left: false, right: false };
+document.getElementById("up").addEventListener("touchstart", ()=>move.up=true);
+document.getElementById("up").addEventListener("touchend", ()=>move.up=false);
+document.getElementById("down").addEventListener("touchstart", ()=>move.down=true);
+document.getElementById("down").addEventListener("touchend", ()=>move.down=false);
+document.getElementById("left").addEventListener("touchstart", ()=>move.left=true);
+document.getElementById("left").addEventListener("touchend", ()=>move.left=false);
+document.getElementById("right").addEventListener("touchstart", ()=>move.right=true);
+document.getElementById("right").addEventListener("touchend", ()=>move.right=false);
 
-document.addEventListener("keydown", (e) => keys[e.key] = true);
-document.addEventListener("keyup", (e) => keys[e.key] = false);
+// Auch Pfeiltasten für Desktop
+document.addEventListener("keydown", (e)=>{
+  if(e.key=="ArrowUp") move.up=true;
+  if(e.key=="ArrowDown") move.down=true;
+  if(e.key=="ArrowLeft") move.left=true;
+  if(e.key=="ArrowRight") move.right=true;
+});
+document.addEventListener("keyup", (e)=>{
+  if(e.key=="ArrowUp") move.up=false;
+  if(e.key=="ArrowDown") move.down=false;
+  if(e.key=="ArrowLeft") move.left=false;
+  if(e.key=="ArrowRight") move.right=false;
+});
 
 function update() {
-    // Spielerbewegung
-    if(keys["ArrowUp"] && player.y > 0) player.y -= speed;
-    if(keys["ArrowDown"] && player.y < canvas.height - player.size) player.y += speed;
-    if(keys["ArrowLeft"] && player.x > 0) player.x -= speed;
-    if(keys["ArrowRight"] && player.x < canvas.width - player.size) player.x += speed;
+    if(move.up && player.y>0) player.y -= speed;
+    if(move.down && player.y<canvas.height-player.size) player.y += speed;
+    if(move.left && player.x>0) player.x -= speed;
+    if(move.right && player.x<canvas.width-player.size) player.x += speed;
 
     // Punkt einsammeln
     if(player.x < point.x + point.size &&
@@ -54,17 +99,11 @@ function update() {
 }
 
 function draw() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-    // Spieler zeichnen
+    ctx.clearRect(0,0,canvas.width,canvas.height);
     ctx.fillStyle = player.color;
     ctx.fillRect(player.x, player.y, player.size, player.size);
-
-    // Punkt zeichnen
     ctx.fillStyle = point.color;
     ctx.fillRect(point.x, point.y, point.size, point.size);
-
-    // Score anzeigen
     ctx.fillStyle = "white";
     ctx.font = "20px Arial";
     ctx.fillText("Score: " + score, 10, 30);
