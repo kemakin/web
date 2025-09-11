@@ -1,57 +1,82 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-  <meta charset="UTF-8">
-  <title>Link Shortener</title>
-  <style>
-    body { font-family: sans-serif; padding: 20px; }
-    input, button { padding: 8px; margin: 5px 0; width: 100%; }
-    .shortened { margin-top: 10px; }
-  </style>
+<meta charset="UTF-8">
+<title>Fang den Punkt!</title>
+<style>
+  body { 
+    display: flex; 
+    justify-content: center; 
+    align-items: center; 
+    height: 100vh; 
+    background-color: #222; 
+    color: white; 
+    font-family: sans-serif;
+  }
+  canvas { 
+    background-color: #333; 
+    border: 2px solid #fff; 
+  }
+</style>
 </head>
 <body>
-  <h2>🔗 Link Shortener</h2>
-  <input type="text" id="longUrl" placeholder="Gib deinen langen Link ein">
-  <button onclick="shortenUrl()">Kürzen</button>
-  <div class="shortened" id="result"></div>
+<canvas id="gameCanvas" width="500" height="500"></canvas>
+<script>
+const canvas = document.getElementById("gameCanvas");
+const ctx = canvas.getContext("2d");
 
-  <script>
-    function generateCode(length = 6) {
-      const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-      let code = '';
-      for (let i = 0; i < length; i++) {
-        code += chars.charAt(Math.floor(Math.random() * chars.length));
-      }
-      return code;
+let player = { x: 250, y: 250, size: 20, color: "lime" };
+let point = { x: Math.random()*480, y: Math.random()*480, size: 15, color: "red" };
+let score = 0;
+let speed = 5;
+
+let keys = {};
+
+document.addEventListener("keydown", (e) => keys[e.key] = true);
+document.addEventListener("keyup", (e) => keys[e.key] = false);
+
+function update() {
+    // Spielerbewegung
+    if(keys["ArrowUp"] && player.y > 0) player.y -= speed;
+    if(keys["ArrowDown"] && player.y < canvas.height - player.size) player.y += speed;
+    if(keys["ArrowLeft"] && player.x > 0) player.x -= speed;
+    if(keys["ArrowRight"] && player.x < canvas.width - player.size) player.x += speed;
+
+    // Punkt einsammeln
+    if(player.x < point.x + point.size &&
+       player.x + player.size > point.x &&
+       player.y < point.y + point.size &&
+       player.y + player.size > point.y) {
+        score++;
+        point.x = Math.random()*480;
+        point.y = Math.random()*480;
     }
+}
 
-    function shortenUrl() {
-      const longUrl = document.getElementById('longUrl').value.trim();
-      if (!longUrl) return alert("Bitte gib einen gültigen Link ein.");
+function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      const code = generateCode();
-      localStorage.setItem(code, longUrl);
+    // Spieler zeichnen
+    ctx.fillStyle = player.color;
+    ctx.fillRect(player.x, player.y, player.size, player.size);
 
-      const shortUrl = `${location.origin}/?r=${code}`;
-      document.getElementById('result').innerHTML = `
-        <p>✅ Dein kurzer Link:</p>
-        <a href="${shortUrl}" target="_blank">${shortUrl}</a>
-      `;
-    }
+    // Punkt zeichnen
+    ctx.fillStyle = point.color;
+    ctx.fillRect(point.x, point.y, point.size, point.size);
 
-    // Redirect if short code is present
-    window.onload = function () {
-      const params = new URLSearchParams(window.location.search);
-      const redirectCode = params.get('r');
-      if (redirectCode) {
-        const originalUrl = localStorage.getItem(redirectCode);
-        if (originalUrl) {
-          window.location.href = originalUrl;
-        } else {
-          document.body.innerHTML = "<h3>❌ Link nicht gefunden.</h3>";
-        }
-      }
-    };
-  </script>
+    // Score anzeigen
+    ctx.fillStyle = "white";
+    ctx.font = "20px Arial";
+    ctx.fillText("Score: " + score, 10, 30);
+}
+
+function gameLoop() {
+    update();
+    draw();
+    requestAnimationFrame(gameLoop);
+}
+
+gameLoop();
+</script>
 </body>
 </html>
