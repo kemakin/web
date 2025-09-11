@@ -2,188 +2,56 @@
 <html lang="de">
 <head>
   <meta charset="UTF-8">
-  <title>IBAN & BIC Checker</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Link Shortener</title>
   <style>
-    body {
-      margin: 0;
-      font-family: 'Segoe UI', Roboto, sans-serif;
-      background-color: #f4f6f8;
-      color: #333;
-    }
-
-    .container {
-      max-width: 600px;
-      margin: 40px auto;
-      background: #fff;
-      padding: 30px;
-      border-radius: 12px;
-      box-shadow: 0 8px 20px rgba(0,0,0,0.08);
-    }
-
-    h1 {
-      text-align: center;
-      color: #0052cc;
-      margin-bottom: 30px;
-    }
-
-    label {
-      display: block;
-      margin-top: 15px;
-      font-weight: 600;
-    }
-
-    input {
-      width: 100%;
-      padding: 10px;
-      margin-top: 5px;
-      border: 1px solid #ccc;
-      border-radius: 6px;
-      font-size: 16px;
-    }
-
-    button {
-      margin-top: 20px;
-      width: 100%;
-      padding: 12px;
-      background-color: #0052cc;
-      color: white;
-      font-size: 16px;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-      transition: background 0.3s ease;
-    }
-
-    button:hover {
-      background-color: #003d99;
-    }
-
-    .section-title {
-      margin-top: 40px;
-      font-size: 18px;
-      color: #00bfa5;
-      border-bottom: 2px solid #00bfa5;
-      padding-bottom: 5px;
-    }
-
-    .result {
-      margin-top: 20px;
-      padding: 15px;
-      background-color: #e3f2fd;
-      border-left: 5px solid #0052cc;
-      border-radius: 6px;
-      position: relative;
-    }
-
-    .success { color: #388e3c; }
-    .error { color: #d32f2f; }
-
-    .spinner {
-      width: 24px;
-      height: 24px;
-      border: 4px solid #ccc;
-      border-top: 4px solid #0052cc;
-      border-radius: 50%;
-      animation: spin 1s linear infinite;
-      margin: 10px auto;
-    }
-
-    @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
-
-    .bank-logo {
-      max-width: 120px;
-      margin-top: 10px;
-    }
+    body { font-family: sans-serif; padding: 20px; }
+    input, button { padding: 8px; margin: 5px 0; width: 100%; }
+    .shortened { margin-top: 10px; }
   </style>
 </head>
 <body>
-  <div class="container">
-    <h1>IBAN & BIC Checker</h1>
-
-    <div class="section-title">IBAN berechnen (nur DE)</div>
-    <label for="blz">Bankleitzahl (BLZ)</label>
-    <input type="text" id="blz" maxlength="8" placeholder="z. B. 42850035">
-    <label for="konto">Kontonummer</label>
-    <input type="text" id="konto" maxlength="10" placeholder="z. B. 1234567890">
-    <button onclick="berechneIBAN()">IBAN generieren</button>
-
-    <div class="section-title">IBAN prüfen</div>
-    <label for="ibanInput">IBAN eingeben</label>
-    <input type="text" id="ibanInput" placeholder="z. B. DE89428500351234567890">
-    <button onclick="pruefeIBAN()">IBAN validieren</button>
-
-    <div id="result" class="result"></div>
-  </div>
+  <h2>🔗 Link Shortener</h2>
+  <input type="text" id="longUrl" placeholder="Gib deinen langen Link ein">
+  <button onclick="shortenUrl()">Kürzen</button>
+  <div class="shortened" id="result"></div>
 
   <script>
-    function berechneIBAN() {
-      const blz = document.getElementById("blz").value.padStart(8, '0');
-      const konto = document.getElementById("konto").value.padStart(10, '0');
-      const resultDiv = document.getElementById("result");
-
-      if (!/^\d{8}$/.test(blz) || !/^\d{10}$/.test(konto)) {
-        resultDiv.innerHTML = `<span class="error">❌ Bitte gültige BLZ und Kontonummer eingeben.</span>`;
-        return;
+    function generateCode(length = 6) {
+      const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+      let code = '';
+      for (let i = 0; i < length; i++) {
+        code += chars.charAt(Math.floor(Math.random() * chars.length));
       }
-
-      const bban = blz + konto;
-      const numericCountry = "1314";
-      const checkString = bban + numericCountry + "00";
-      const remainder = BigInt(checkString) % 97n;
-      const checkDigits = (98n - remainder).toString().padStart(2, '0');
-      const iban = "DE" + checkDigits + bban;
-
-      document.getElementById("ibanInput").value = iban;
-      pruefeIBAN();
+      return code;
     }
 
-    async function pruefeIBAN() {
-      const iban = document.getElementById("ibanInput").value.trim().toUpperCase();
-      const resultDiv = document.getElementById("result");
+    function shortenUrl() {
+      const longUrl = document.getElementById('longUrl').value.trim();
+      if (!longUrl) return alert("Bitte gib einen gültigen Link ein.");
 
-      if (!/^[A-Z]{2}\d{2}[A-Z0-9]{10,30}$/.test(iban)) {
-        resultDiv.innerHTML = `<span class="error">❌ Bitte eine gültige IBAN eingeben.</span>`;
-        return;
-      }
+      const code = generateCode();
+      localStorage.setItem(code, longUrl);
 
-      resultDiv.innerHTML = `<div class="spinner"></div><div>⏳ Prüfe IBAN...</div>`;
-
-      try {
-        const response = await fetch(`https://openiban.com/validate/${iban}?getBIC=true&validateBankCode=true`);
-        const data = await response.json();
-
-        if (!data.valid) {
-          resultDiv.innerHTML = `<span class="error">❌ Ungültige IBAN.</span>`;
-          return;
-        }
-
-        const bank = data.bankData?.name || "Unbekannt";
-        const bic = data.bankData?.bic || "Nicht gefunden";
-        const blz = data.bankData?.bankCode || iban.slice(4, 12);
-        let konto = data.accountNumber;
-        if (!konto && iban.startsWith("DE")) {
-          konto = iban.slice(12);
-        }
-
-        // Beispielhafte Logo-URL (du kannst echte Logos einbauen)
-        const logoURL = `https://logo.clearbit.com/${bic.toLowerCase().slice(0,8)}.com`;
-
-        resultDiv.innerHTML = `
-          <span class="success">✅ IBAN gültig:</span> ${iban}<br>
-          <span class="success">✔️ Prüfziffer korrekt</span><br>
-          <span class="success">🏦 Bank:</span> ${bank}<br>
-          <span class="success">🔢 BIC:</span> ${bic}<br>
-          ${iban.startsWith("DE") ? `<span class="success">🏁 BLZ:</span> ${blz}<br><span class="success">💳 Kontonummer:</span> ${konto}` : ""}
-          <br><img src="${logoURL}" alt="Banklogo" class="bank-logo" onerror="this.style.display='none'">
-        `;
-      } catch (error) {
-        resultDiv.innerHTML = `<span class="error">⚠️ Fehler beim Abrufen der Bankdaten.</span>`;
-        console.error(error);
-      }
+      const shortUrl = `${location.origin}/?r=${code}`;
+      document.getElementById('result').innerHTML = `
+        <p>✅ Dein kurzer Link:</p>
+        <a href="${shortUrl}" target="_blank">${shortUrl}</a>
+      `;
     }
+
+    // Redirect if short code is present
+    window.onload = function () {
+      const params = new URLSearchParams(window.location.search);
+      const redirectCode = params.get('r');
+      if (redirectCode) {
+        const originalUrl = localStorage.getItem(redirectCode);
+        if (originalUrl) {
+          window.location.href = originalUrl;
+        } else {
+          document.body.innerHTML = "<h3>❌ Link nicht gefunden.</h3>";
+        }
+      }
+    };
   </script>
 </body>
 </html>
