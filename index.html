@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Apple Wallet Pass Generator</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #007AFF;
+            --secondary: #5856D6;
+            --success: #34C759;
+            --dark: #1D1D1F;
+            --light: #F5F5F7;
+            --border-radius: 14px;
+            --box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+            --transition: all 0.3s ease;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #F5F5F7 0%, #E8E8ED 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1200px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            background: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            overflow: hidden;
+        }
+
+        @media (max-width: 900px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .settings-panel {
+            background: var(--light);
+            padding: 30px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .preview-panel {
+            background: white;
+            padding: 30px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+        }
+
+        h1 {
+            color: var(--dark);
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 28px;
+            font-weight: 700;
+        }
+
+        h2 {
+            color: var(--dark);
+            font-size: 20px;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+
+        .input-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 14px 16px;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: var(--transition);
+            background: white;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            border-color: var(--primary);
+            outline: none;
+            box-shadow: 0 0 0 4px rgba(0, 122, 255, 0.1);
+        }
+
+        .color-picker {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .color-picker input {
+            flex: 1;
+            height: 44px;
+            padding: 0;
+            border: none;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        button {
+            padding: 14px 20px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #006ee0;
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: var(--secondary);
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #4e4cc5;
+            transform: translateY(-2px);
+        }
+
+        .btn-success {
+            background: var(--success);
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #2cb34c;
+            transform: translateY(-2px);
+        }
+
+        .wallet-preview {
+            position: relative;
+            width: 320px;
+            height: 380px;
+            perspective: 1000px;
+        }
+
+        .wallet-card {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            transform-style: preserve-3d;
+            transition: transform 0.8s;
+            border-radius: 24px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+        }
+
+        .wallet-front, .wallet-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            border-radius: 24px;
+            overflow: hidden;
+        }
+
+        .wallet-front {
+            background: linear-gradient(135deg, #007AFF 0%, #5856D6 100%);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            color: white;
+        }
+
+        .wallet-back {
+            background: linear-gradient(135deg, #FF2D55 0%, #FF3B30 100%);
+            transform: rotateY(180deg);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: white;
+        }
+
+        .wallet-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .wallet-logo {
+            width: 50px;
+            height: 50px;
+            border-radius: 10px;
+            background: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+            color: var(--primary);
+            font-size: 20px;
+        }
+
+        .wallet-type {
+            font-size: 14px;
+            opacity: 0.8;
+        }
+
+        .wallet-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .wallet-title {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .wallet-info {
+            margin-top: auto;
+        }
+
+        .wallet-info-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .wallet-info-item:last-child {
+            border-bottom: none;
+        }
+
+        .wallet-barcode {
+            width: 80%;
+            height: 100px;
+            background: white;
+            border-radius: 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 20px 0;
+        }
+
+        .barcode-lines {
+            display: flex;
+            align-items: center;
+            height: 60px;
+        }
+
+        .barcode-line {
+            height: 100%;
+            width: 4px;
+            background: black;
+            margin: 0 2px;
+        }
+
+        .wallet-footer {
+            text-align: center;
+            font-size: 12px;
+            opacity: 0.7;
+            margin-top: 10px;
+        }
+
+        .flip-btn {
+            margin-top: 20px;
+            background: var(--dark);
+            color: white;
+        }
+
+        .flip-btn:hover {
+            background: #333;
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 15px 25px;
+            background: var(--success);
+            color: white;
+            border-radius: 10px;
+            box-shadow: var(--box-shadow);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transform: translateY(100px);
+            opacity: 0;
+            transition: all 0.3s ease;
+        }
+
+        .toast.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        .pass-type-selector {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .pass-type {
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            text-align: center;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .pass-type.active {
+            border-color: var(--primary);
+            background-color: rgba(0, 122, 255, 0.1);
+        }
+
+        .pass-type i {
+            font-size: 24px;
+            margin-bottom: 5px;
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="settings-panel">
+            <h1>Apple Wallet Pass Generator</h1>
+            
+            <div class="input-group">
+                <label>Pass Typ</label>
+                <div class="pass-type-selector">
+                    <div class="pass-type active" data-type="boarding">
+                        <i class="fas fa-plane"></i>
+                        <span>Boarding</span>
+                    </div>
+                    <div class="pass-type" data-type="event">
+                        <i class="fas fa-ticket-alt"></i>
+                        <span>Event</span>
+                    </div>
+                    <div class="pass-type" data-type="coupon">
+                        <i class="fas fa-tag"></i>
+                        <span>Coupon</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="input-group">
+                <label for="pass-title">Titel</label>
+                <input type="text" id="pass-title" placeholder="Pass Titel" value="VIP Boarding Pass">
+            </div>
+            
+            <div class="input-group">
+                <label for="pass-organization">Organisation</label>
+                <input type="text" id="pass-organization" placeholder="Unternehmensname" value="SkyAirlines">
+            </div>
+            
+            <div class="input-group">
+                <label for="pass-description">Beschreibung</label>
+                <textarea id="pass-description" rows="2" placeholder="Beschreibung">First Class - Flug 1234</textarea>
+            </div>
+            
+            <div class="input-group">
+                <label>Hintergrundfarbe</label>
+                <div class="color-picker">
+                    <input type="color" id="pass-color" value="#007AFF">
+                </div>
+            </div>
+            
+            <div class="input-group">
+                <label for="pass-field1">Feld 1</label>
+                <input type="text" id="pass-field1" placeholder="Feldname" value="Von:">
+                <input type="text" id="pass-value1" placeholder="Wert" value="Berlin (BER)" style="margin-top: 8px;">
+            </div>
+            
+            <div class="input-group">
+                <label for="pass-field2">Feld 2</label>
+                <input type="text" id="pass-field2" placeholder="Feldname" value="Nach:">
+                <input type="text" id="pass-value2" placeholder="Wert" value="New York (JFK)" style="margin-top: 8px;">
+            </div>
+            
+            <div class="input-group">
+                <label for="pass-field3">Feld 3</label>
+                <input type="text" id="pass-field3" placeholder="Feldname" value="Abflug:">
+                <input type="text" id="pass-value3" placeholder="Wert" value="14:30, 15 Aug" style="margin-top: 8px;">
+            </div>
+            
+            <div class="buttons">
+                <button id="generate-btn" class="btn-primary">
+                    <i class="fas fa-plus-circle"></i> Pass generieren
+                </button>
+                <button id="download-btn" class="btn-success">
+                    <i class="fas fa-download"></i> Für Wallet speichern
+                </button>
+            </div>
+        </div>
+        
+        <div class="preview-panel">
+            <h2>Vorschau</h2>
+            <div class="wallet-preview">
+                <div class="wallet-card" id="wallet-card">
+                    <div class="wallet-front">
+                        <div class="wallet-header">
+                            <div class="wallet-logo" id="wallet-logo">SA</div>
+                            <div class="wallet-type" id="wallet-type">BOARDING PASS</div>
+                        </div>
+                        <div class="wallet-content">
+                            <div class="wallet-title" id="wallet-title">VIP Boarding Pass</div>
+                            <div class="wallet-description" id="wallet-description">First Class - Flug 1234</div>
+                        </div>
+                        <div class="wallet-info">
+                            <div class="wallet-info-item">
+                                <span>Von:</span>
+                                <span id="preview-value1">Berlin (BER)</span>
+                            </div>
+                            <div class="wallet-info-item">
+                                <span>Nach:</span>
+                                <span id="preview-value2">New York (JFK)</span>
+                            </div>
+                            <div class="wallet-info-item">
+                                <span>Abflug:</span>
+                                <span id="preview-value3">14:30, 15 Aug</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="wallet-back">
+                        <div class="wallet-barcode">
+                            <div class="barcode-lines">
+                                <div class="barcode-line" style="height: 80%"></div>
+                                <div class="barcode-line" style="height: 60%"></div>
+                                <div class="barcode-line" style="height: 70%"></div>
+                                <div class="barcode-line" style="height: 90%"></div>
+                                <div class="barcode-line" style="height: 50%"></div>
+                                <div class="barcode-line" style="height: 80%"></div>
+                                <div class="barcode-line" style="height: 40%"></div>
+                                <div class="barcode-line" style="height: 95%"></div>
+                                <div class="barcode-line" style="height: 30%"></div>
+                                <div class="barcode-line" style="height: 85%"></div>
+                            </div>
+                        </div>
+                        <div class="wallet-footer">
+                            Scannen Sie den Barcode am Gate
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <button id="flip-btn" class="flip-btn">
+                <i class="fas fa-sync-alt"></i> Karte umdrehen
+            </button>
+        </div>
+    </div>
+    
+    <div class="toast" id="toast">
+        <i class="fas fa-check-circle"></i>
+        <span id="toast-message">Pass erfolgreich generiert!</span>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Elemente auswählen
+            const passTypeElements = document.querySelectorAll('.pass-type');
+            const passTitle = document.getElementById('pass-title');
+            const passOrganization = document.getElementById('pass-organization');
+            const passDescription = document.getElementById('pass-description');
+            const passColor = document.getElementById('pass-color');
+            const passField1 = document.getElementById('pass-field1');
+            const passValue1 = document.getElementById('pass-value1');
+            const passField2 = document.getElementById('pass-field2');
+            const passValue2 = document.getElementById('pass-value2');
+            const passField3 = document.getElementById('pass-field3');
+            const passValue3 = document.getElementById('pass-value3');
+            const generateBtn = document.getElementById('generate-btn');
+            const downloadBtn = document.getElementById('download-btn');
+            const flipBtn = document.getElementById('flip-btn');
+            const walletCard = document.getElementById('wallet-card');
+            const walletLogo = document.getElementById('wallet-logo');
+            const walletType = document.getElementById('wallet-type');
+            const walletTitle = document.getElementById('wallet-title');
+            const walletDescription = document.getElementById('wallet-description');
+            const previewValue1 = document.getElementById('preview-value1');
+            const previewValue2 = document.getElementById('preview-value2');
+            const previewValue3 = document.getElementById('preview-value3');
+            const toast = document.getElementById('toast');
+            const toastMessage = document.getElementById('toast-message');
+            
+            // Aktiver Pass-Typ
+            let activePassType = 'boarding';
+            
+            // Event-Listener für Pass-Typ Auswahl
+            passTypeElements.forEach(type => {
+                type.addEventListener('click', function() {
+                    passTypeElements.forEach(t => t.classList.remove('active'));
+                    this.classList.add('active');
+                    activePassType = this.dataset.type;
+                    updatePassType();
+                });
+            });
+            
+            // Pass-Typ aktualisieren
+            function updatePassType() {
+                let typeText = '';
+                switch(activePassType) {
+                    case 'boarding':
+                        typeText = 'BOARDING PASS';
+                        break;
+                    case 'event':
+                        typeText = 'EVENT TICKET';
+                        break;
+                    case 'coupon':
+                        typeText = 'COUPON';
+                        break;
+                }
+                walletType.textContent = typeText;
+            }
+            
+            // Pass generieren
+            generateBtn.addEventListener('click', generatePass);
+            
+            function generatePass() {
+                // Vorschau aktualisieren
+                walletLogo.textContent = passOrganization.value.substring(0, 2).toUpperCase();
+                walletTitle.textContent = passTitle.value;
+                walletDescription.textContent = passDescription.value;
+                previewValue1.textContent = passValue1.value;
+                previewValue2.textContent = passValue2.value;
+                previewValue3.textContent = passValue3.value;
+                
+                // Farbe aktualisieren
+                const color = passColor.value;
+                document.querySelector('.wallet-front').style.background = `linear-gradient(135deg, ${color} 0%, ${adjustColor(color, -40)} 100%)`;
+                
+                showToast('Pass erfolgreich generiert!');
+            }
+            
+            // Für Wallet speichern
+            downloadBtn.addEventListener('click', function() {
+                showToast('Pass steht zum Download bereit!');
+                
+                // In einer echten Implementierung würde hier eine .pkpass Datei generiert werden
+                // Für diese Demo erstellen wir einen simulierten Download
+                const a = document.createElement('a');
+                a.href = 'data:text/plain;charset=utf-8,Simulierter Apple Wallet Pass Download';
+                a.download = `${passTitle.value.replace(/\s+/g, '_')}.pkpass`;
+                a.style.display = 'none';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+            });
+            
+            // Karte umdrehen
+            flipBtn.addEventListener('click', function() {
+                walletCard.style.transform = walletCard.style.transform === 'rotateY(180deg)' ? '' : 'rotateY(180deg)';
+            });
+            
+            // Hilfsfunktion zur Farbanpassung
+            function adjustColor(hex, amount) {
+                let r = parseInt(hex.substring(1, 3), 16);
+                let g = parseInt(hex.substring(3, 5), 16);
+                let b = parseInt(hex.substring(5, 7), 16);
+                
+                r = Math.max(0, Math.min(255, r + amount));
+                g = Math.max(0, Math.min(255, g + amount));
+                b = Math.max(0, Math.min(255, b + amount));
+                
+                return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
+            }
+            
+            // Toast-Nachricht anzeigen
+            function showToast(message) {
+                toastMessage.textContent = message;
+                toast.classList.add('show');
+                
+                setTimeout(() => {
+                    toast.classList.remove('show');
+                }, 3000);
+            }
+            
+            // Initialen Pass generieren
+            generatePass();
+        });
+    </script>
+</body>
+</html>
