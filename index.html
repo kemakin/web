@@ -1,121 +1,71 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="de">
 <head>
-<meta charset="UTF-8">
-<title>Fang den Punkt! (Mobil)</title>
-<style>
-  body { 
-    display: flex; 
-    flex-direction: column;
-    align-items: center; 
-    justify-content: center; 
-    height: 100vh; 
-    margin: 0; 
-    background-color: #222; 
-    color: white; 
-    font-family: sans-serif;
-  }
-  canvas { 
-    background-color: #333; 
-    border: 2px solid #fff; 
-    touch-action: none;
-  }
-  .controls {
-    margin-top: 10px;
-    display: grid;
-    grid-template-columns: repeat(3, 60px);
-    grid-template-rows: repeat(2, 60px);
-    gap: 10px;
-  }
-  .btn {
-    background-color: #555;
-    color: white;
-    font-size: 20px;
-    border: none;
-    border-radius: 10px;
-  }
-</style>
+  <meta charset="utf-8">
+  <title>Kreditkarten Vergleich</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; background: #f9f9f9; }
+    h1 { color: #333; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; }
+    .card { background: #fff; border: 1px solid #ddd; padding: 14px; border-radius: 6px; }
+    .card h2 { margin-top: 0; font-size: 18px; }
+    .btn { display: inline-block; padding: 8px 12px; background: #0066cc; color: #fff; text-decoration: none; border-radius: 4px; }
+  </style>
 </head>
 <body>
-<canvas id="gameCanvas" width="500" height="500"></canvas>
-<div class="controls">
-  <button class="btn" id="up">↑</button>
-  <div></div>
-  <button class="btn" id="down">↓</button>
-  <button class="btn" id="left">←</button>
-  <div></div>
-  <button class="btn" id="right">→</button>
-</div>
+  <h1>Kreditkarten Vergleich</h1>
+  <input id="search" placeholder="Suche..." style="padding:8px; width: 250px;">
+  <div id="product-list" class="grid"></div>
 
-<script>
-const canvas = document.getElementById("gameCanvas");
-const ctx = canvas.getContext("2d");
+  <script>
+    // Produktdaten direkt im Browser
+    const products = [
+      {
+        id: "visa-classic",
+        title: "Visa Classic – Beispielkarte",
+        short: "0€ Jahresgebühr im 1. Jahr",
+        annualFee: "0€ (1. Jahr)",
+        apr: "19,9%",
+        affiliateUrl: "https://example.com/visa-affiliate"
+      },
+      {
+        id: "mastercard-premium",
+        title: "Mastercard Premium",
+        short: "Premium-Leistungen, Loungezugang",
+        annualFee: "59€",
+        apr: "15,2%",
+        affiliateUrl: "https://example.com/master-affiliate"
+      }
+    ];
 
-let player = { x: 250, y: 250, size: 20, color: "lime" };
-let point = { x: Math.random()*480, y: Math.random()*480, size: 15, color: "red" };
-let score = 0;
-let speed = 5;
-
-// Bewegung über Buttons
-let move = { up: false, down: false, left: false, right: false };
-document.getElementById("up").addEventListener("touchstart", ()=>move.up=true);
-document.getElementById("up").addEventListener("touchend", ()=>move.up=false);
-document.getElementById("down").addEventListener("touchstart", ()=>move.down=true);
-document.getElementById("down").addEventListener("touchend", ()=>move.down=false);
-document.getElementById("left").addEventListener("touchstart", ()=>move.left=true);
-document.getElementById("left").addEventListener("touchend", ()=>move.left=false);
-document.getElementById("right").addEventListener("touchstart", ()=>move.right=true);
-document.getElementById("right").addEventListener("touchend", ()=>move.right=false);
-
-// Auch Pfeiltasten für Desktop
-document.addEventListener("keydown", (e)=>{
-  if(e.key=="ArrowUp") move.up=true;
-  if(e.key=="ArrowDown") move.down=true;
-  if(e.key=="ArrowLeft") move.left=true;
-  if(e.key=="ArrowRight") move.right=true;
-});
-document.addEventListener("keyup", (e)=>{
-  if(e.key=="ArrowUp") move.up=false;
-  if(e.key=="ArrowDown") move.down=false;
-  if(e.key=="ArrowLeft") move.left=false;
-  if(e.key=="ArrowRight") move.right=false;
-});
-
-function update() {
-    if(move.up && player.y>0) player.y -= speed;
-    if(move.down && player.y<canvas.height-player.size) player.y += speed;
-    if(move.left && player.x>0) player.x -= speed;
-    if(move.right && player.x<canvas.width-player.size) player.x += speed;
-
-    // Punkt einsammeln
-    if(player.x < point.x + point.size &&
-       player.x + player.size > point.x &&
-       player.y < point.y + point.size &&
-       player.y + player.size > point.y) {
-        score++;
-        point.x = Math.random()*480;
-        point.y = Math.random()*480;
+    function render(list) {
+      const container = document.getElementById("product-list");
+      container.innerHTML = "";
+      list.forEach(p => {
+        const card = document.createElement("div");
+        card.className = "card";
+        card.innerHTML = `
+          <h2>${p.title}</h2>
+          <p>${p.short}</p>
+          <p><strong>Gebühr:</strong> ${p.annualFee}</p>
+          <p><strong>APR:</strong> ${p.apr}</p>
+          <a class="btn" href="${p.affiliateUrl}" target="_blank">Zum Anbieter</a>
+        `;
+        container.appendChild(card);
+      });
     }
-}
 
-function draw() {
-    ctx.clearRect(0,0,canvas.width,canvas.height);
-    ctx.fillStyle = player.color;
-    ctx.fillRect(player.x, player.y, player.size, player.size);
-    ctx.fillStyle = point.color;
-    ctx.fillRect(point.x, point.y, point.size, point.size);
-    ctx.fillStyle = "white";
-    ctx.font = "20px Arial";
-    ctx.fillText("Score: " + score, 10, 30);
-}
+    // Initiale Anzeige
+    render(products);
 
-function gameLoop() {
-    update();
-    draw();
-    requestAnimationFrame(gameLoop);
-}
-
-gameLoop();
-</script>
+    // Suche
+    document.getElementById("search").addEventListener("input", (e) => {
+      const q = e.target.value.toLowerCase();
+      const filtered = products.filter(p =>
+        (p.title + p.short).toLowerCase().includes(q)
+      );
+      render(filtered);
+    });
+  </script>
 </body>
 </html>
